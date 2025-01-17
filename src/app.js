@@ -44,37 +44,62 @@ app.delete("/user", async (req, res) => {
 });
 
 // update by email
-app.patch("/user", async (req, res) => {
-  try {
-    const params = req.query;
-    console.log("param", params);
+// app.patch("/user", async (req, res) => {
+//   try {
+//     const params = req.query;
+//     console.log("param", params);
 
-    const result = await User.findOneAndUpdate(
-      { email: params.userEmail },
-      req.body
-    );
-    console.log("result123", result);
-    res.send({
-      data: {},
-      STATUS: "SUCCESS",
-    });
-  } catch (err) {
-    res.status(500).send("Filed to update" + err.message);
-  }
-});
+//     const result = await User.findOneAndUpdate(
+//       { email: params.userEmail },
+//       req.body,
+//       {
+//         runValidators: true,
+//       }
+//     );
+//     console.log("result123", result);
+//     res.send({
+//       data: {},
+//       STATUS: "SUCCESS",
+//     });
+//   } catch (err) {
+//     res.status(500).send("Filed to update" + err.message);
+//   }
+// });
 
 //update by id
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
   try {
-    const userId = req.body.userId;
-    const result = await User.findByIdAndUpdate(userId, req.body);
+    if (Object.keys(req.body).includes("email")) {
+      throw new Error("email can not be updated");
+    }
+    const allowedKeys = [
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+      "password",
+      "profileURL",
+      "skills",
+    ];
+    Object.keys(req.body).forEach((element) => {
+      if (!allowedKeys.includes(element)) {
+        throw new Error("Invalid data received");
+      }
+    });
+
+    if (req.body.skills?.length > 10) {
+      throw new Error("Send only top 10 skills");
+    }
+    const result = await User.findByIdAndUpdate(req.params.userId, req.body, {
+      runValidators: true,
+    });
     console.log("result", result);
     res.send({
       data: {},
       STATUS: "SUCCESS",
     });
   } catch (err) {
-    res.status(500).send("Filed to delete" + err.message);
+    res.status(500).send("Error:" + err.message);
   }
 });
 

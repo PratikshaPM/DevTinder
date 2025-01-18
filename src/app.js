@@ -1,10 +1,15 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
+const cookeiParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const connectDB = require("./config/database.js");
 const User = require("./models/user.js");
 const app = express();
 
 // Middle ware to parse json request boday in javascript object
 app.use(express.json());
+// Middleware to parse the cookies
+app.use(cookeiParser());
 
 // Get user with email id
 app.get("/user", async (req, res) => {
@@ -93,7 +98,6 @@ app.patch("/user/:userId", async (req, res) => {
     const result = await User.findByIdAndUpdate(req.params.userId, req.body, {
       runValidators: true,
     });
-    console.log("result", result);
     res.send({
       data: {},
       STATUS: "SUCCESS",
@@ -104,12 +108,58 @@ app.patch("/user/:userId", async (req, res) => {
 });
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
   try {
+    const { firstName, lastName, email, password } = req.body;
+    const hashPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: hashPassword,
+    });
     await user.save();
     res.send("data saved successfully");
   } catch (err) {
     res.status(500).send("failed to save data" + err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const userData = await User.findOne({ email });
+
+    if (!userData) {
+      throw new Error("Invalid Credential");
+    }
+    const isValidPassword = await bcrypt.compare(password, userData.password);
+    if (isValidPassword) {
+      var token = jwt.sign({ _id: userData._id }, "mona@123");
+      res.cookie("token", token);
+      res.send("Logged in successfully");
+    } else {
+      throw new Error("Invalid Credential");
+    }
+  } catch (err) {
+    res.status(500).send("ERR:" + err.message);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      throw new Error("Invalid Token");
+    }
+    const decoded = jwt.verify(token, "mona@123");
+    if (!decoded) {
+      throw new Error("Couldnt validate you");
+    }
+    const user = await User.findById(decoded._id);
+    console.log(("cookie", user));
+    res.send("successful");
+  } catch (err) {
+    res.status(500).send("ERR:" + err.message);
   }
 });
 

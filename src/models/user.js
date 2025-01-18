@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       validate: (value) => {
         if (!validator.isEmail(value)) {
-          throw new Error("Email must ahve @");
+          throw new Error("Password is not strong");
         }
       },
     },
@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       validate(value) {
         if (!validator.isStrongPassword(value)) {
-          throw new Error("PLease enter string password");
+          throw new Error("PLease enter str0ng password");
         }
       },
     },

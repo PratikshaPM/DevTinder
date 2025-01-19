@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -55,5 +57,22 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+//FOr schema methods always use normal functions because in this functions this is refering to current instance of the schema.
+userSchema.methods.getJWTToken = function () {
+  const token = jwt.sign({ _id: this._id }, "mona@123", {
+    expiresIn: "1d", //expires token
+  });
+
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (userInputPassword) {
+  const isValidPassword = await bcrypt.compare(
+    userInputPassword,
+    this.password
+  );
+  return isValidPassword;
+};
 
 module.exports = mongoose.model("User", userSchema);

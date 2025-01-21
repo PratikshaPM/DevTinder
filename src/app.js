@@ -4,6 +4,7 @@ const connectDB = require("./config/database.js");
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile.js");
 const requestRouter = require("./routes/request.js");
+const userRouter = require("./routes/user.js");
 
 const app = express();
 // Middle ware to parse json request boday in javascript object
@@ -14,6 +15,7 @@ app.use(cookeiParser());
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
+app.use("/", userRouter);
 
 connectDB()
   .then(() => {

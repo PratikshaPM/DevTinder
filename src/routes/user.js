@@ -1,6 +1,7 @@
 const express = require("express");
 const { userAuth } = require("../middlewares/auth");
 const ConectionReq = require("../models/connectionRequest");
+const User = require("../models/user");
 
 const userRouter = express.Router();
 
@@ -51,6 +52,41 @@ userRouter.get("/user/request-accepted", userAuth, async (req, res) => {
     });
   } catch (error) {
     res.status(400).send("ERROR: " + error.message);
+  }
+});
+
+userRouter.get("/user/feed", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const noOfRecords = parseInt(req.query.noOfRecords) || 10;
+    const skip = (page - 1) * noOfRecords;
+    const existingConnections = await ConectionReq.find({
+      $or: [{ fromUser: loggedInUser._id }, { toUser: loggedInUser._id }],
+    }).select("fromUser toUser");
+
+    const uniqueIds = new Set();
+    existingConnections.forEach((conn) => {
+      uniqueIds.add(conn.fromUser);
+      uniqueIds.add(conn.toUser);
+    });
+
+    const feedData = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(uniqueIds) } },
+        { _id: { $ne: loggedInUser._id } },
+      ],
+    })
+      .select("firstName lastName email profileURL skills")
+      .skip(skip)
+      .limit(noOfRecords);
+
+    res.json({
+      data: feedData,
+      message: "Fetched Data successfully",
+    });
+  } catch (error) {
+    res.status(400).send("Error:" + error.message);
   }
 });
 module.exports = userRouter;

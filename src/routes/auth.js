@@ -7,6 +7,14 @@ const authRouter = express.Router();
 authRouter.post("/signup", async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
+
+    const userWithCurrentEmail = await User.findOne({
+      email,
+    });
+
+    if (userWithCurrentEmail) {
+      return res.status(500).send("User is already registered with emil");
+    }
     const hashPassword = await bcrypt.hash(password, 10);
     const user = new User({
       firstName,

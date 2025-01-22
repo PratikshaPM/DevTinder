@@ -15,10 +15,10 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, // It is used create uniqueue indexe and dosent work as validator that it will accept duplicate email
       validate: (value) => {
         if (!validator.isEmail(value)) {
-          throw new Error("Password is not strong");
+          throw new Error("Invalid email");
         }
       },
     },
